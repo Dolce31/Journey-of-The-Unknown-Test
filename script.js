@@ -335,18 +335,18 @@ function renderDialogue() {
   const speakerEl = document.getElementById('speaker-name');
   if (speakerEl) speakerEl.innerText = dialogue.speaker;
 
-  // จัดการซ่อน/แสดงกรอบรูป: ถ้า "บรรยาย" ซ่อนทิ้ง
+  // จัดการซ่อน/แสดงกรอบรูป: ถ้าเป็น "บรรยาย" หรือ มี "quiz" ให้ซ่อนกรอบ
   const portraitBox = document.querySelector('.portrait-box');
   const portraitImg = document.getElementById('portrait-img');
 
   if (portraitBox) {
-    portraitBox.style.display = (dialogue.speaker === "บรรยาย") ? "none" : "flex";
+    portraitBox.style.display = (dialogue.speaker === "บรรยาย" || dialogue.quiz) ? "none" : "flex";
   }
 
-  // แสดงภาพตัวละคร
+  // แสดงภาพตัวละคร (เฉพาะเมื่อไม่ใช่บรรยาย และไม่มีช้อย)
   if (portraitImg) {
     const imgSrc = characterImages[dialogue.speaker];
-    if (imgSrc) {
+    if (imgSrc && dialogue.speaker !== "บรรยาย" && !dialogue.quiz) {
       portraitImg.src = imgSrc;
       portraitImg.classList.remove('hidden');
     } else {

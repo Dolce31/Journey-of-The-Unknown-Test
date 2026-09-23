@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Journey of the Unknown</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Itim&family=Nunito:wght@400;600;700;800&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- ลิงก์เชื่อมไปหาไฟล์ style.css -->
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <div class="game-container">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <button id="btn-glossary" class="icon-btn">คำศัพท์</button>
+      <button id="btn-audio" class="icon-btn audio-btn">♫</button>
+    </header>
+
+    <!-- Audio Element -->
+    <audio id="bgm-player" src="https://files.catbox.moe/otb4t9.mp3" loop preload="auto"></audio>
+
+    <!-- Toast Notification -->
+    <div id="game-toast" class="game-toast"></div>
+
+    <!-- Screen 1: Title Screen -->
+    <section id="screen-title" class="screen active">
+      <div class="title-content">
+        <div class="art-placeholder main-cover">
+          <div class="placeholder-box">[ ภาพปกเกม ]</div>
+        </div>
+        <h1 class="game-title">Journey of the Unknown</h1>
+        <p class="game-subtitle">คำอธิบายเกม</p>
+        <button id="btn-start" class="btn-primary">เริ่มเกม</button>
+      </div>
+    </section>
+
+    <!-- Screen 2: Difficulty Selection -->
+    <section id="screen-difficulty" class="screen">
+      <div class="diff-container">
+        <h2 class="section-title">ระดับความยาก</h2>
+        <div class="diff-stack">
+          <button id="btn-diff-easy" class="diff-card-clean easy">
+            <span class="diff-text">ง่าย</span>
+          </button>
+          <button id="btn-diff-hard" class="diff-card-clean hard">
+            <span class="diff-text">ยาก</span>
+          </button>
+        </div>
+        <button id="btn-diff-back" class="btn-text">กลับหน้าหลัก</button>
+      </div>
+    </section>
+
+    <!-- Screen 3: Story Episodes -->
+    <section id="screen-stage" class="screen">
+      <div class="stage-header">
+        <h2 class="episodes-main-title">STORY EPISODES</h2>
+        <span id="diff-badge" class="badge">EASY</span>
+      </div>
+
+      <div class="stage-map">
+        <!-- prelude -->
+        <div id="node-prelude" class="stage-node unlocked">
+          <div class="node-num">1</div>
+          <div class="node-info">
+            <strong>บทนำ</strong>
+            <small>ว็อดส์</small>
+          </div>
+          <span class="lock-icon"></span>
+        </div>
+
+        <div class="path-line"></div>
+
+        <!-- stage1 -->
+        <div id="node-stage1" class="stage-node locked">
+          <div class="node-num">2</div>
+          <div class="node-info">
+            <strong>บทที่ 1</strong>
+            <small>ว็อดส์1</small>
+          </div>
+          <span class="lock-icon">LOCKED</span>
+        </div>
+
+        <div class="path-line"></div>
+
+        <!-- stage2 -->
+        <div id="node-stage2" class="stage-node locked">
+          <div class="node-num">3</div>
+          <div class="node-info">
+            <strong>บทที่ 2</strong>
+            <small>ว็อดส์2</small>
+          </div>
+          <span class="lock-icon">LOCKED</span>
+        </div>
+
+        <div class="path-line"></div>
+
+        <!-- stage3 -->
+        <div id="node-stage3" class="stage-node locked">
+          <div class="node-num">4</div>
+          <div class="node-info">
+            <strong>บทที่ 3</strong>
+            <small>ว็อดส์3</small>
+          </div>
+          <span class="lock-icon">LOCKED</span>
+        </div>
+
+        <div class="path-line"></div>
+
+        <!-- stage4 -->
+        <div id="node-stage4" class="stage-node locked">
+          <div class="node-num">5</div>
+          <div class="node-info">
+            <strong>บทที่ 4</strong>
+            <small>ว็อดส์4</small>
+          </div>
+          <span class="lock-icon">LOCKED</span>
+        </div>
+      </div>
+
+      <button id="btn-stage-back" class="btn-text" style="margin-top: 15px;">ย้อนกลับ</button>
+    </section>
+
+    <!-- Screen 4: Gameplay -->
+    <section id="screen-gameplay" class="screen">
+      <div class="scene-viewer">
+        <img id="scene-bg-img" src="" alt="ฉาก" class="scene-bg-img hidden" referrerpolicy="no-referrer">
+        <div class="bg-placeholder-guide">[ ฉาก ]</div>
+      </div>
+      <div class="dialogue-panel integrated-panel">
+        <!-- กรอบรูปตัวละครแนวตั้ง (ซ้าย) -->
+        <div class="portrait-box">
+          <div class="portrait-frame">
+            <img id="portrait-img" src="" alt="" class="hidden" referrerpolicy="no-referrer">
+          </div>
+          <div id="speaker-name" class="speaker-tag">เรา</div>
+        </div>
+
+        <!-- ข้อความบทพูด (ขวา) -->
+        <div class="dialogue-right">
+          <div class="text-area">
+            <p id="dialogue-jp" class="jp-text"></p>
+            <div id="quiz-choices" class="quiz-container hidden"></div>
+          </div>
+          <div class="action-bar">
+            <button id="btn-next" class="btn-action">ถัดไป ❯</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 5: Cleared -->
+    <section id="screen-cleared" class="screen">
+      <div class="cleared-content">
+        <h2 id="cleared-title" class="cleared-title">เคลียร์ด่านสำเร็จ!</h2>
+        <p id="cleared-subtitle" class="cleared-subtitle"></p>
+        <div class="cleared-card">
+          <p id="cleared-desc">คุณผ่านบทนำเรียบร้อยแล้ว เตรียมติดตามตอนต่อไปได้เลย!</p>
+        </div>
+        <div class="cleared-actions">
+          <button id="btn-next-chapter" class="btn-primary">ตอนถัดไป</button>
+          <button id="btn-back-map" class="btn-text">ย้อนกลับ</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 6: Game Over -->
+    <section id="screen-gameover" class="screen">
+      <div class="gameover-content">
+        <h2 class="gameover-title">GAME OVER</h2>
+        <p class="gameover-subtitle">การเดินทางสิ้นสุดลงแล้ว...</p>
+        <div class="gameover-reason-box">
+          <span class="label">สาเหตุ:</span>
+          <p id="gameover-reason">-</p>
+        </div>
+        <button id="btn-retry" class="btn-retry">ลองใหม่อีกครั้ง</button>
+      </div>
+    </section>
+
+    <!-- Modal Glossary -->
+    <div id="modal-glossary" class="modal-overlay hidden">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>คลังคำศัพท์</h3>
+          <button id="btn-close-glossary" class="btn-close">ปิด</button>
+        </div>
+        <div class="modal-body">
+          <ul id="glossary-list" class="vocab-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ลิงก์เชื่อมไปหาไฟล์ script.js -->
+  <script src="/script.js"></script>
+</body>
+</html>

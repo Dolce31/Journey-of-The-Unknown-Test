@@ -12,7 +12,7 @@ function initAudioContext() {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (AudioContext) audioCtx = new AudioContext();
   }
-  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
 }
 
 function playDialogueBeep() {
@@ -24,10 +24,9 @@ function playDialogueBeep() {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(460 + (Math.random() * 40), now);
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(460 + Math.random() * 40, now);
 
-    // ปรับระดับความดังขึ้นให้ชัดเจน (0.45) พร้อมจังหวะตัดเสียงที่คมชัด
     gain.gain.setValueAtTime(0.45, now);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.045);
 
@@ -43,106 +42,420 @@ function startAudioOnUserGesture() {
   initAudioContext();
   if (!isMusicStarted && bgm) {
     bgm.volume = 0.4;
-    bgm.play().then(() => {
-      isMusicStarted = true;
-      if (btnAudio) btnAudio.innerText = '♫';
-    }).catch(() => {});
+    bgm
+      .play()
+      .then(() => {
+        isMusicStarted = true;
+        if (btnAudio) btnAudio.innerText = "♫";
+      })
+      .catch(() => {});
   }
 }
 
-const stageOrder = ['prelude', 'stage1', 'stage2', 'stage3', 'stage4', 'stage5'];
+// ลำดับ 5 บท
+const stageOrder = [
+  "stage1",
+  "stage2",
+  "stage3",
+  "stage4",
+  "stage5",
+];
+
+// เก็บแท็บบทที่กำลังเลือกดู
+let currentGlossaryTab = "stage1";
 
 const gameData = {
   glossary: {
-    easy: [
+    stage1: [
+      { jp: "何 (なに)", th: "อะไร" },
       { jp: "女神様 (めがみさま)", th: "ท่านเทพธิดา" },
-      { jp: "冒険者 (ぼうけんしゃ)", th: "นักผจญภัย" },
-      { jp: "ギルド", th: "กิลด์ / สมาคม" },
-      { jp: "そうじ (掃除)", th: "การทำความสะอาด" },
-      { jp: "やくそう (薬草)", th: "สมุนไพร" },
-      { jp: "言葉が通じない (ことばがつうじない)", th: "คุยกันไม่รู้เรื่อง / สื่อสารไม่ได้" }
-    ],
-    hard: [
+      { jp: "お母さん (おかあさん)", th: "คุณแม่" },
+      { jp: "痛い (いたい)", th: "เจ็บ / ปวด" },
+      { jp: "息 (いき)", th: "ลมหายใจ" },
+      { jp: "言葉 (ことば)", th: "คำพูด / ภาษา" },
       { jp: "一体何事 (いったいなにごと)", th: "เกิดเรื่องอะไรขึ้นกันแน่" },
       { jp: "降臨 (こうりん)", th: "การลงมาจุติ" },
-      { jp: "登録手続き (とうろくてつづき)", th: "ขั้นตอนการลงทะเบียน" },
-      { jp: "依頼 (いらい)", th: "คำขอร้อง / เควส" },
-      { jp: "恐縮ですが (きょうしゅくですが)", th: "ขอประทานอภัยอย่างยิ่ง (Keigo)" },
-      { jp: "報酬 (ほうしゅう)", th: "ค่าตอบแทน" }
-    ]
+      { jp: "天 (てん)", th: "สวรรค์ / ท้องฟ้า" },
+      { jp: "意識 (いしき)", th: "สติสัมปชัญญะ" },
+      { jp: "返事 (へんじ)", th: "การตอบรับ / คำตอบ" },
+      { jp: "召喚 (しょうかん)", th: "การอัญเชิญ" },
+      { jp: "魔力 (まりょく)", th: "พลังเวทมนตร์" }
+    ],
+    stage2: [
+      { jp: "受付 (うけつけ)", th: "แผนกต้อนรับ / ประชาสัมพันธ์" },
+      { jp: "名前 (なまえ)", th: "ชื่อ" },
+      { jp: "者 (もの)", th: "ผู้... / คน" },
+      { jp: "冒険者 (ぼうけんしゃ)", th: "นักผจญภัย" },
+      { jp: "格好 (かっこう)", th: "รูปลักษณ์ / การแต่งกาย" },
+      { jp: "身元 (みもと)", th: "ตัวตน / ภูมิหลัง" },
+      { jp: "証明 (しょうめい)", th: "การยืนยัน / หลักฐาน" },
+      { jp: "事故 (じこ)", th: "อุบัติเหตุ" }
+    ],
+    stage3: [],
+    stage4: [],
+    stage5: []
   },
   stages: {
-    prelude: {
-      name: "บทนำ",
-      title: "บทนำ: ว้อดส์",
+    stage1: {
+      name: "บทที่ 1",
+      title: "บทที่ 1: ว้อดส์",
       easy: {
         dialogues: [
-          { 
-            speaker: "บรรยาย", 
+          {
+            speaker: "บรรยาย",
             jp: "ตุบบบ\n..........",
-            bg: "https://files.catbox.moe/0gn4hl.PNG" // ลิงก์ฉากหลัง
+            bg: "https://files.catbox.moe/0gn4hl.PNG",
           },
-          { speaker: "เรา", jp: "โอ้ยยยยย!!!  เจ็บจะบ้า อะไรวะเนี่ย ตาลืมแทบไม่ขึ้นหูก็วิ้งฟังไม่รู้เรื่องเลย" },
+          {
+            speaker: "เรา",
+            jp: "โอ้ยยยยย!!!  เจ็บจะบ้า อะไรวะเนี่ย ตาลืมแทบไม่ขึ้นหูก็วิ้งฟังไม่รู้เรื่องเลย",
+          },
           { speaker: "ชาวบ้าน A", jp: "おい、何があったんだ？" },
           { speaker: "ชาวบ้าน B", jp: "女神様じゃないのか？" },
-          { speaker: "ชาวบ้าน C", jp: "お母さん、女神様も落ちて痛い痛いするの？" },
-          { speaker: "???", jp: "おーい！大丈夫か？おい、君ーーっ！" },
+          {
+            speaker: "ชาวบ้าน C",
+            jp: "お母さん、女神様も落ちて痛い痛いするの？",
+          },
           { speaker: "เรา", jp: "ห้ะ" },
-          { speaker: "บรรยาย", jp: "// ลืมตา //\nเมื่อภาพตรงหน้าชัดขึ้น สิ่งที่ปรากฏคือสิ่งมีชีวิตตัวเล็กประหลาดพูดได้ลอยสูงจากพื้นจนอยู่ในระดับสายตา" },
-          { 
-            speaker: "เรา", 
+          {
+            speaker: "บรรยาย",
+            jp: "เมื่อภาพตรงหน้าชัดขึ้น สิ่งที่ปรากฏคือสิ่งมีชีวิตตัวเล็กประหลาดพูดได้อยู่เต็มรอบตัว",
+            bg: "https://files.catbox.moe/hu81qp.JPG",
+          },
+          {
+            speaker: "เรา",
             jp: ".............",
             quiz: {
               choices: [
                 { text: "กรุงเทพเนทีฟเขามีสิ่งนี้หรอ", isCorrect: true },
-                { text: "อ้ายบ่อยากเชื่อสายตาว่าภาพตรงหน้าสิเป็นความจริง", isCorrect: true },
+                {
+                  text: "อ้ายบ่อยากเชื่อสายตาว่าภาพตรงหน้าสิเป็นความจริง",
+                  isCorrect: true,
+                },
                 { text: "กูเป็นบ้ามั้ยเนี่ย //ตบหน้าตัวเอง", isCorrect: true },
-                { text: "ฝันดี //หลับตานอนใหม่", isCorrect: true }
-              ]
-            }
+                { text: "ฝันดี //หลับตานอนใหม่", isCorrect: true },
+              ],
+            },
           },
-          { speaker: "???", jp: "おーい！聞こえてるか？…あれ？言葉が通じないのか？" },
+          {
+            speaker: "บรรยาย",
+            jp: "ในขณะที่กำลังตกใจกับภาพตรงหน้าก็มีแมวตัวสีขาวเดินเข้ามาหา",
+            bg: "https://files.catbox.moe/eqkghi.PNG",
+          },
+          {
+            speaker: "???",
+            jp: "おーい！息はあるか！？おいってば、あんたーーっ！",
+          },
+          { speaker: "เรา", jp: "....." },
+          {
+            speaker: "???",
+            jp: "おーい！聞こえてるか？…あれ？言葉が通じないのか？",
+          },
           { speaker: "???", jp: "นี่แกนะ ได้ยินที่ข้าพูดใช่ไหมเนี่ย" },
-          { speaker: "เรา", jp: "กำลังพูดไทยอยู่หรอ!!?!?!" },
-          { speaker: "เรา", jp: "เดี๋ยวมาต่อท้อคักพี่ๆ ใครคิดได้ช่วยด้วย" }
-        ]
+          {
+            speaker: "เรา",
+            jp: "พูดไทยอยู่หร๊ออออ เดี๋ยวไม่สิ สัตว์จะไปพูดได้ยังไงบ้าป่ะเนี่ย ",
+          },
+          { speaker: "???", jp: "เจ้านะสิบ้า" },
+          { speaker: "???", jp: "แต่ยังไงก็ขอโทษทีนะ ข้าชื่อเฟลิส" },
+          {
+            speaker: "เฟลิส",
+            jp: "ยินดีต้อนรับ พอดีทางพวกข้าทำพิธีอัญเชิญผิดพลาดเจ้าก็เลยถูกดึงมาที่นี่น่ะ",
+          },
+          { speaker: "เฟลิส", jp: "ตอนนี้เจ้าน่ะก็เลยอยู่ต่างโลก" },
+          { speaker: "เรา", jp: "ห๊าาาาาาา" },
+          {
+            speaker: "เฟลิส",
+            jp: "แต่ว่าไม่ต้องห่วงไปหรอกนะ พวกข้าส่งเจ้ากลับได้",
+          },
+          { speaker: "เรา", jp: "จริงหรอ งั้นทำเลย ก่อนที่จะเป็นลม" },
+          { speaker: "เฟลิส", jp: "อ๊ะ แต่ว่า" },
+          {
+            speaker: "เฟลิส",
+            jp: "พวกที่เตรียมพิธี มีภารกิจต้องไปทำงานช่วยเหลือชาวบ้านนี่สิ ลืมไปเลยแหะ ",
+            bg: "https://files.catbox.moe/yai4fw.PNG",
+          },
+          { speaker: "เฟลิส", jp: "ก็คงต้องรอก่อนอะนะ" },
+          {
+            speaker: "เรา",
+            jp: ".............",
+            quiz: {
+              choices: [
+                { text: "ล้อกันเล่นป่ะเนี่ย", isCorrect: true },
+                {
+                  text: "จับกินซะดีมั้ย",
+                  isCorrect: true,
+                },
+              ],
+            },
+          },
+          { speaker: "เฟลิส", jp: "ใจเย็นน่าาาา" },
+          { speaker: "เฟลิส", jp: "หรือว่า" },
+          {
+            speaker: "เฟลิส",
+            jp: "เจ้าจะไปทำภารกิจแทนล่ะ",
+            bg: "https://files.catbox.moe/25z9t1.PNG",
+          },
+          { speaker: "เรา", jp: "หํะ" },
+          {
+            speaker: "เฟลิส",
+            jp: "โลกนี้น่ะนะมีสิ่งที่เรียกว่าเวทมนต์ แต่ก็ไม่ใช่ทุกคนจะใช้มันได้",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "คนที่มีพลังเลยได้รับภารกิจให้ช่วยซัพพอร์ตการใช้ชีวิตทั่วไปของผู้คนน่ะ",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "พลังเวทจะออกมาเมื่อจดจ่อและร่ายด้วยภาษาของโลกนี้",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "ข้าเองก็สัมผัสพลังเวทจากเจ้าได้ ถ้าทำตามที่ข้าบอกเจ้าใช้มันได้แน่ๆ",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "เอาไงล่ะ จะทนรอต่อไป หรืออยากรีบกลับโลกเดิม",
+          },
+          {
+            speaker: "เรา",
+            jp: ".............",
+            quiz: {
+              choices: [
+                { text: "ก็มีแต่ต้องทำ", isCorrect: true },
+                {
+                  text: "จะทนอยู่ต่อก็ไม่ไหว ทำก็ได้ ",
+                  isCorrect: true,
+                },
+                { text: "ถ้ามันทำให้กลับได้ไวฉันก็จะทำ ", isCorrect: true },
+              ],
+            },
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "ตัดสินใจได้ดีนิ",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "อะนี่",
+            bg: "https://files.catbox.moe/69e8nt.PNG",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "นี่คือภารกิจกับไม้กายสิทธิ์",
+          },
+          {
+            speaker: "เรา",
+            jp: "กำจัดฝุ่น เก็บสมุนไพร........ ",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "ไม่ยากใช่มั้ยละ แล้วข้าเองก็จะไปด้วย จะค่อยช่วยเหลือนิดๆหน่อยๆก็ละกัน",
+          },
+          {
+            speaker: "เรา",
+            jp: "เยอะอยู่นะเนี่ย แล้วทำไมเจ้าไม่ทำล่ะ",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "ห๊าา ก็ไม่ใช่หน้าที่ข้าสักหน่อย ข้าเองก็มีภาระหนักมากอยู่แล้ว",
+          },
+          {
+            speaker: "เรา",
+            jp: "ที่ไปด้วย เพราะกะจะอู้ใช่มั้ยเนี่ย",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "รู้ดีจริงๆ แต่ก็ตามนั้นแหละ",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "งั้น ถ้าพร้อมแล้วเราก็ไปกันเถอะ ",
+          },
+        ],
       },
       hard: {
         dialogues: [
-          { 
-            speaker: "บรรยาย", 
+          {
+            speaker: "บรรยาย",
             jp: "ตุบบบ\n..........",
-            bg: "https://i.postimg.cc/RFxrJHTw/IMG-5717.png"
+            bg: "https://files.catbox.moe/0gn4hl.PNG",
           },
-          { speaker: "เรา", jp: "โอ้ยยยยย!!!  เจ็บจะบ้า อะไรวะเนี่ย ตาลืมแทบไม่ขึ้นหูก็วิ้งฟังไม่รู้เรื่องเลย" },
-          { speaker: "ชาวบ้าน A", jp: "おい、一体何事だ！？" },
-          { speaker: "ชาวบ้าน B", jp: "空から降臨なさるはずของ女神様…ではないのか？" },
-          { speaker: "ชาวบ้าน C", jp: "おかあさん、天から落ちてきた女神様も痛がるの？" },
-          { speaker: "???", jp: "おーい！息はあるか！？おいってば、あんたーーっ！" },
+          {
+            speaker: "เรา",
+            jp: "โอ้ยยยยย!!!  เจ็บจะบ้า อะไรวะเนี่ย ตาลืมแทบไม่ขึ้นหูก็วิ้งฟังไม่รู้เรื่องเลย",
+          },
+          { speaker: "ชาวบ้าน A", jp: "おい、一体何事だ！？空から何かが落ちてきたぞ！" },
+          {
+            speaker: "ชาวบ้าน B",
+            jp: "空より降臨あそばされた女神様…というわけではなさそうだな。",
+          },
+          {
+            speaker: "ชาวบ้าน C",
+            jp: "おかあさん、天から落ちてきた神様も痛がるものなの？",
+          },
           { speaker: "เรา", jp: "ห้ะ" },
-          { speaker: "บรรยาย", jp: "// ลืมตา //\nเมื่อภาพตรงหน้าชัดขึ้น สิ่งที่ปรากฏคือสิ่งมีชีวิตตัวเล็กประหลาดพูดได้ลอยสูงจากพื้นจนอยู่ในระดับสายตา" },
-          { 
-            speaker: "เรา", 
+          {
+            speaker: "บรรยาย",
+            jp: "เมื่อภาพตรงหน้าชัดขึ้น สิ่งที่ปรากฏคือสิ่งมีชีวิตตัวเล็กประหลาดพูดได้อยู่เต็มรอบตัว",
+            bg: "https://files.catbox.moe/hu81qp.JPG",
+          },
+          {
+            speaker: "เรา",
             jp: ".............",
             quiz: {
               choices: [
                 { text: "กรุงเทพเนทีฟเขามีสิ่งนี้หรอ", isCorrect: true },
-                { text: "อ้ายบ่อยากเชื่อสายตาว่าภาพตรงหน้าสิเป็นความจริง", isCorrect: true },
+                {
+                  text: "อ้ายบ่อยากเชื่อสายตาว่าภาพตรงหน้าสิเป็นความจริง",
+                  isCorrect: true,
+                },
                 { text: "กูเป็นบ้ามั้ยเนี่ย //ตบหน้าตัวเอง", isCorrect: true },
-                { text: "ฝันดี //หลับตานอนใหม่", isCorrect: true }
-              ]
-            }
+                { text: "ฝันดี //หลับตานอนใหม่", isCorrect: true },
+              ],
+            },
           },
-          { speaker: "???", jp: "おいおい！話を聞いてるのか？…む、さては言葉が通じておらんのか？" },
+          {
+            speaker: "บรรยาย",
+            jp: "ในขณะที่กำลังตกใจกับภาพตรงหน้าก็มีแมวตัวสีขาวเดินเข้ามาหา",
+            bg: "https://files.catbox.moe/eqkghi.PNG",
+          },
+          {
+            speaker: "???",
+            jp: "おい！息災か！？意識はあるのか？返事をせんか、あんたーーっ！",
+          },
+          { speaker: "เรา", jp: "....." },
+          {
+            speaker: "???",
+            jp: "おい、聞こえておるか？…む、さては言語が通じておらんのか？",
+          },
           { speaker: "???", jp: "นี่แกนะ ได้ยินที่ข้าพูดใช่ไหมเนี่ย" },
-          { speaker: "เรา", jp: "กำลังพูดไทยอยู่หรอ!!?!?!" },
-          { speaker: "เรา", jp: "เดี๋ยวมาต่อท้อคักพี่ๆ ใครคิดได้ช่วยด้วย" }
-        ]
-      }
+          {
+            speaker: "เรา",
+            jp: "พูดไทยอยู่หร๊ออออ เดี๋ยวไม่สิ สัตว์จะไปพูดได้ยังไงบ้าป่ะเนี่ย ",
+          },
+          { speaker: "???", jp: "เจ้านะสิบ้า" },
+          { speaker: "???", jp: "แต่ยังไงก็ขอโทษทีนะ ข้าชื่อเฟลิส" },
+          {
+            speaker: "เฟลิส",
+            jp: "ยินดีต้อนรับ พอดีทางพวกข้าทำพิธีอัญเชิญผิดพลาดเจ้าก็เลยถูกดึงมาที่นี่น่ะ",
+          },
+          { speaker: "เฟลิส", jp: "ตอนนี้เจ้าน่ะก็เลยอยู่ต่างโลก" },
+          { speaker: "เรา", jp: "ห๊าาาาาาา" },
+          {
+            speaker: "เฟลิส",
+            jp: "แต่ว่าไม่ต้องห่วงไปหรอกนะ พวกข้าส่งเจ้ากลับได้",
+          },
+          { speaker: "เรา", jp: "จริงหรอ งั้นทำเลย ก่อนที่จะเป็นลม" },
+          { speaker: "เฟลิส", jp: "อ๊ะ แต่ว่า" },
+          {
+            speaker: "เฟลิส",
+            jp: "พวกที่เตรียมพิธี มีภารกิจต้องไปทำงานช่วยเหลือชาวบ้านนี่สิ ลืมไปเลยแหะ ",
+            bg: "https://files.catbox.moe/yai4fw.PNG",
+          },
+          { speaker: "เฟลิส", jp: "ก็คงต้องรอก่อนอะนะ" },
+          {
+            speaker: "เรา",
+            jp: ".............",
+            quiz: {
+              choices: [
+                { text: "ล้อกันเล่นป่ะเนี่ย", isCorrect: true },
+                {
+                  text: "จับกินซะดีมั้ย",
+                  isCorrect: true,
+                },
+              ],
+            },
+          },
+          { speaker: "เฟลิส", jp: "ใจเย็นน่าาาา" },
+          { speaker: "เฟลิส", jp: "หรือว่า" },
+          {
+            speaker: "เฟลิส",
+            jp: "เจ้าจะไปทำภารกิจแทนล่ะ",
+            bg: "https://files.catbox.moe/25z9t1.PNG",
+          },
+          { speaker: "เรา", jp: "หํะ" },
+          {
+            speaker: "เฟลิส",
+            jp: "โลกนี้น่ะนะมีสิ่งที่เรียกว่าเวทมนต์ แต่ก็ไม่ใช่ทุกคนจะใช้มันได้",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "คนที่มีพลังเลยได้รับภารกิจให้ช่วยซัพพอร์ตการใช้ชีวิตทั่วไปของผู้คนน่ะ",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "พลังเวทจะออกมาเมื่อจดจ่อและร่ายด้วยภาษาของโลกนี้",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "ข้าเองก็สัมผัสพลังเวทจากเจ้าได้ ถ้าทำตามที่ข้าบอกเจ้าใช้มันได้แน่ๆ",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "เอาไงล่ะ จะทนรอต่อไป หรืออยากรีบกลับโลกเดิม",
+          },
+          {
+            speaker: "เรา",
+            jp: ".............",
+            quiz: {
+              choices: [
+                { text: "ก็มีแต่ต้องทำ", isCorrect: true },
+                {
+                  text: "จะทนอยู่ต่อก็ไม่ไหว ทำก็ได้ ",
+                  isCorrect: true,
+                },
+                { text: "ถ้ามันทำให้กลับได้ไวฉันก็จะทำ ", isCorrect: true },
+              ],
+            },
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "ตัดสินใจได้ดีนิ",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "อะนี่",
+            bg: "https://files.catbox.moe/69e8nt.PNG",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "นี่คือภารกิจกับไม้กายสิทธิ์",
+          },
+          {
+            speaker: "เรา",
+            jp: "กำจัดฝุ่น เก็บสมุนไพร........ ",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "ไม่ยากใช่มั้ยละ แล้วข้าเองก็จะไปด้วย จะค่อยช่วยเหลือนิดๆหน่อยๆก็ละกัน",
+          },
+          {
+            speaker: "เรา",
+            jp: "เยอะอยู่นะเนี่ย แล้วทำไมเจ้าไม่ทำล่ะ",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "ห๊าา ก็ไม่ใช่หน้าที่ข้าสักหน่อย ข้าเองก็มีภาระหนักมากอยู่แล้ว",
+          },
+          {
+            speaker: "เรา",
+            jp: "ที่ไปด้วย เพราะกะจะอู้ใช่มั้ยเนี่ย",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "รู้ดีจริงๆ แต่ก็ตามนั้นแหละ",
+          },
+          {
+            speaker: "เฟลิส",
+            jp: "งั้น ถ้าพร้อมแล้วเราก็ไปกันเถอะ ",
+          },
+        ],
+      },
     },
-    stage1: {
-      name: "ตอนที่ 1",
-      title: "ตอนที่ 1: ว้อดส์1",
+    stage2: {
+      name: "บทที่ 2",
+      title: "บทที่ 2: ว้อดส์ 2",
       easy: {
         dialogues: [
           { speaker: "ギルド受付", jp: "いらっしゃいませ！お名前は何ですか？" },
@@ -152,55 +465,71 @@ const gameData = {
             quiz: {
               choices: [
                 { text: "私はタイから来た者です。", isCorrect: true },
-                { text: "タイは私です。", isCorrect: false, deathReason: "เรียงไวยากรณ์ผิดจนพูดว่า 'ประเทศเทศไทยคือฉัน' พนักงานคิดว่าเป็นคนบ้า ยามกิลด์เลยหวดด้วยกระบองจนสลบ!" }
-              ]
-            }
-          }
-        ]
+                {
+                  text: "タイは私です。",
+                  isCorrect: false,
+                  deathReason:
+                    "เรียงไวยากรณ์ผิดจนพูดว่า 'ประเทศเทศไทยคือฉัน' พนักงานคิดว่าเป็นคนบ้า ยามกิลด์เลยหวดด้วยกระบองจนสลบ!",
+                },
+              ],
+            },
+          },
+        ],
       },
       hard: {
         dialogues: [
-          { speaker: "ギルドマスター", jp: "見慣れない格好だな。身元を証明できるものはあるか？" },
+          {
+            speaker: "ギルドマスター",
+            jp: "見慣れない格好だな。身元を証明できるものはあるか？",
+          },
           {
             speaker: "あなた",
             jp: "……",
             quiz: {
               choices: [
-                { text: "タイから参りました。事故で迷い込みました。", isCorrect: true },
-                { text: "タイ人だけど、知らんわ。", isCorrect: false, deathReason: "ใช้ภาษาห้วนใส่หัวหน้ากิลด์ระดับสูง! ถูกเข้าใจผิดว่าเป็นสายลับจากอาณาจักรศัตรู โดนเวทมนตร์ไฟเผาวูบไปเลย!" }
-              ]
-            }
-          }
-        ]
-      }
+                {
+                  text: "タイから参りました。事故で迷い込みました。",
+                  isCorrect: true,
+                },
+                {
+                  text: "タイ人だけど、知らんわ。",
+                  isCorrect: false,
+                  deathReason:
+                    "ใช้ภาษาห้วนใส่หัวหน้ากิลด์ระดับสูง! ถูกเข้าใจผิดว่าเป็นสายลับจากอาณาจักรศัตรู โดนเวทมนตร์ไฟเผาวูบไปเลย!",
+                },
+              ],
+            },
+          },
+        ],
+      },
     },
-    stage2: { name: "ตอนที่ 2", title: "ตอนที่ 2: ว้อดส์2" },
-    stage3: { name: "ตอนที่ 3", title: "ตอนที่ 3: ว้อดส์3" },
-    stage4: { name: "ตอนที่ 4", title: "ตอนที่ 4: ว้อดส์4" },
-    stage5: { name: "ตอนที่ 5", title: "ตอนที่ 5: ว้อดส์5" }
-  }
+    stage3: { name: "บทที่ 3", title: "บทที่ 3: ว้อดส์ 3" },
+    stage4: { name: "บทที่ 4", title: "บทที่ 4: ว้อดส์ 4" },
+    stage5: { name: "บทที่ 5", title: "บทที่ 5: ว้อดส์ 5" },
+  },
 };
 
 /* ==========================================================================
    ใส่ลิงก์รูปตัวละครของคุณที่นี่
    ========================================================================== */
 const characterImages = {
-  "เรา": "",           // ตัวอย่าง: "https://.../me.png"
-  "ชาวบ้าน A": "",    // ตัวอย่าง: "https://.../villagerA.png"
+  เรา: "https://files.catbox.moe/2csuu8.PNG",
+  เฟลิส: "https://files.catbox.moe/ioyavk.PNG",
+  "ชาวบ้าน A": "",
   "ชาวบ้าน B": "",
   "ชาวบ้าน C": "",
-  "???": "",
-  "บรรยาย": ""        // ปล่อยว่างไว้ ระบบจะซ่อนกรอบอัตโนมัติ
+  "???": "https://files.catbox.moe/ioyavk.PNG",
+  บรรยาย: "",
 };
 
-let currentDifficulty = 'easy';
-let currentStageId = 'prelude';
+let currentDifficulty = "easy";
+let currentStageId = "stage1";
 let currentDialogueIndex = 0;
 let currentDialogueList = [];
 let unlockedStageIndex = 0;
 
 try {
-  unlockedStageIndex = parseInt(localStorage.getItem('savedStageIndex')) || 0;
+  unlockedStageIndex = parseInt(localStorage.getItem("savedStageIndex")) || 0;
 } catch (e) {
   unlockedStageIndex = 0;
 }
@@ -210,44 +539,47 @@ let isTyping = false;
 let fullCurrentText = "";
 
 function showGameNotification(text) {
-  const toast = document.getElementById('game-toast');
+  const toast = document.getElementById("game-toast");
   if (!toast) return;
   toast.innerText = text;
-  toast.classList.add('show');
-  setTimeout(() => { toast.classList.remove('show'); }, 2500);
+  toast.classList.add("show");
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2500);
 }
 
 function showScreen(screenId) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document
+    .querySelectorAll(".screen")
+    .forEach((s) => s.classList.remove("active"));
   const target = document.getElementById(screenId);
   if (target) {
-    target.classList.add('active');
+    target.classList.add("active");
     target.scrollTop = 0;
   }
 }
 
 function selectDifficulty(diff) {
   currentDifficulty = diff;
-  const badge = document.getElementById('diff-badge');
-  if (badge) badge.innerText = diff === 'easy' ? 'ระดับง่าย' : 'ระดับยาก';
-  updateGlossaryUI();
+  const badge = document.getElementById("diff-badge");
+  if (badge) badge.innerText = diff === "easy" ? "ระดับง่าย" : "ระดับยาก";
   updateStageMapUI();
-  showScreen('screen-stage');
+  showScreen("screen-stage");
 }
 
 function updateStageMapUI() {
   stageOrder.forEach((stageKey, index) => {
     const nodeEl = document.getElementById(`node-${stageKey}`);
     if (!nodeEl) return;
-    const lockIcon = nodeEl.querySelector('.lock-icon');
+    const lockIcon = nodeEl.querySelector(".lock-icon");
     if (index <= unlockedStageIndex) {
-      nodeEl.classList.remove('locked');
-      nodeEl.classList.add('unlocked');
-      if (lockIcon) lockIcon.innerText = '';
+      nodeEl.classList.remove("locked");
+      nodeEl.classList.add("unlocked");
+      if (lockIcon) lockIcon.innerText = "";
     } else {
-      nodeEl.classList.add('locked');
-      nodeEl.classList.remove('unlocked');
-      if (lockIcon) lockIcon.innerText = 'ล็อก';
+      nodeEl.classList.add("locked");
+      nodeEl.classList.remove("unlocked");
+      if (lockIcon) lockIcon.innerText = "ล็อก";
     }
   });
 }
@@ -255,18 +587,19 @@ function updateStageMapUI() {
 function startStage(stageKey) {
   const targetIndex = stageOrder.indexOf(stageKey);
   if (targetIndex > unlockedStageIndex) {
-    showGameNotification("ด่านนี้ยังถูกล็อกอยู่ เคลียร์ด่านก่อนหน้าก่อนนะ!");
+    showGameNotification("บทนี้ยังถูกล็อกอยู่ เคลียร์บทก่อนหน้าก่อนนะ!");
     return;
   }
   currentStageId = stageKey;
   currentDialogueIndex = 0;
   const stage = gameData.stages[stageKey];
   if (!stage || (!stage.dialogues && !stage[currentDifficulty]?.dialogues)) {
-    showGameNotification("ด่านนี้กำลังพัฒนาบทพูดอยู่!");
+    showGameNotification("บทนี้กำลังพัฒนาบทพูดอยู่!");
     return;
   }
-  currentDialogueList = stage.dialogues || stage[currentDifficulty]?.dialogues || [];
-  showScreen('screen-gameplay');
+  currentDialogueList =
+    stage.dialogues || stage[currentDifficulty]?.dialogues || [];
+  showScreen("screen-gameplay");
   renderDialogue();
 }
 
@@ -292,7 +625,7 @@ function typeWriter(text, element, onComplete) {
 
 function finishTypingInstantly() {
   if (typewriterTimer) clearInterval(typewriterTimer);
-  const textEl = document.getElementById('dialogue-jp');
+  const textEl = document.getElementById("dialogue-jp");
   if (textEl) textEl.innerText = fullCurrentText;
   isTyping = false;
   const dialogue = currentDialogueList[currentDialogueIndex];
@@ -300,15 +633,15 @@ function finishTypingInstantly() {
 }
 
 function showQuizChoices(quiz) {
-  const quizContainer = document.getElementById('quiz-choices');
-  const btnNext = document.getElementById('btn-next');
+  const quizContainer = document.getElementById("quiz-choices");
+  const btnNext = document.getElementById("btn-next");
   if (!quizContainer || !btnNext) return;
-  quizContainer.innerHTML = '';
-  quizContainer.classList.remove('hidden');
-  btnNext.classList.add('hidden');
-  quiz.choices.forEach(choice => {
-    const btn = document.createElement('button');
-    btn.className = 'btn-choice';
+  quizContainer.innerHTML = "";
+  quizContainer.classList.remove("hidden");
+  btnNext.classList.add("hidden");
+  quiz.choices.forEach((choice) => {
+    const btn = document.createElement("button");
+    btn.className = "btn-choice";
     btn.innerText = choice.text;
     btn.onclick = () => handleChoice(choice, btn);
     quizContainer.appendChild(btn);
@@ -322,44 +655,47 @@ function renderDialogue() {
     return;
   }
 
-  // สลับรูปฉากหลังผ่านแท็ก <img> เพื่อข้ามการบล็อก Hotlink
-  const bgImg = document.getElementById('scene-bg-img');
-  const guideBox = document.querySelector('.bg-placeholder-guide');
+  const bgImg = document.getElementById("scene-bg-img");
+  const guideBox = document.querySelector(".bg-placeholder-guide");
 
-  if (dialogue.bg && bgImg) {
-    bgImg.src = dialogue.bg;
-    bgImg.classList.remove('hidden');
-    if (guideBox) guideBox.style.display = 'none';
+  if (dialogue.bg) {
+    if (bgImg) {
+      bgImg.src = dialogue.bg;
+      bgImg.classList.remove("hidden");
+    }
+    if (guideBox) guideBox.style.display = "none";
   }
 
-  const speakerEl = document.getElementById('speaker-name');
+  const speakerEl = document.getElementById("speaker-name");
   if (speakerEl) speakerEl.innerText = dialogue.speaker;
 
-  // จัดการซ่อน/แสดงกรอบรูป: ถ้าเป็น "บรรยาย" หรือ มี "quiz" ให้ซ่อนกรอบ
-  const portraitBox = document.querySelector('.portrait-box');
-  const portraitImg = document.getElementById('portrait-img');
+  const portraitBox = document.querySelector(".portrait-box");
+  const portraitFrame = document.querySelector(".portrait-frame");
+  const portraitImg = document.getElementById("portrait-img");
 
   if (portraitBox) {
-    portraitBox.style.display = (dialogue.speaker === "บรรยาย" || dialogue.quiz) ? "none" : "flex";
+    portraitBox.style.display = dialogue.speaker === "บรรยาย" ? "none" : "flex";
   }
 
-  // แสดงภาพตัวละคร (เฉพาะเมื่อไม่ใช่บรรยาย และไม่มีช้อย)
-  if (portraitImg) {
-    const imgSrc = characterImages[dialogue.speaker];
-    if (imgSrc && dialogue.speaker !== "บรรยาย" && !dialogue.quiz) {
+  const imgSrc = characterImages[dialogue.speaker];
+
+  if (portraitFrame && portraitImg) {
+    if (imgSrc) {
+      portraitFrame.style.display = "flex";
       portraitImg.src = imgSrc;
-      portraitImg.classList.remove('hidden');
+      portraitImg.classList.remove("hidden");
     } else {
-      portraitImg.removeAttribute('src');
-      portraitImg.classList.add('hidden');
+      portraitFrame.style.display = "none";
+      portraitImg.removeAttribute("src");
+      portraitImg.classList.add("hidden");
     }
   }
 
-  const textEl = document.getElementById('dialogue-jp');
-  const quizContainer = document.getElementById('quiz-choices');
-  const btnNext = document.getElementById('btn-next');
-  if (quizContainer) quizContainer.classList.add('hidden');
-  if (btnNext) btnNext.classList.remove('hidden');
+  const textEl = document.getElementById("dialogue-jp");
+  const quizContainer = document.getElementById("quiz-choices");
+  const btnNext = document.getElementById("btn-next");
+  if (quizContainer) quizContainer.classList.add("hidden");
+  if (btnNext) btnNext.classList.remove("hidden");
 
   if (textEl) {
     typeWriter(dialogue.jp, textEl, () => {
@@ -370,48 +706,55 @@ function renderDialogue() {
 
 function handleChoice(choice, clickedBtn) {
   if (choice.isCorrect) {
-    document.querySelectorAll('.btn-choice').forEach(b => b.disabled = true);
+    document
+      .querySelectorAll(".btn-choice")
+      .forEach((b) => (b.disabled = true));
     if (clickedBtn) {
-      clickedBtn.style.backgroundColor = '#d8e8b0';
-      clickedBtn.style.borderColor = '#24472e';
-      clickedBtn.style.color = '#24472e';
+      clickedBtn.style.backgroundColor = "#d8e8b0";
+      clickedBtn.style.borderColor = "#24472e";
+      clickedBtn.style.color = "#24472e";
     }
     setTimeout(() => {
       currentDialogueIndex++;
       renderDialogue();
     }, 600);
   } else {
-    triggerGameOver(choice.deathReason || "ใช้ไวยากรณ์ผิดพลาดจนเกิดเรื่องใหญ่!");
+    triggerGameOver(
+      choice.deathReason || "ใช้ไวยากรณ์ผิดพลาดจนเกิดเรื่องใหญ่!",
+    );
   }
 }
 
 function triggerGameOver(reasonText) {
-  const reasonEl = document.getElementById('gameover-reason');
+  const reasonEl = document.getElementById("gameover-reason");
   if (reasonEl) reasonEl.innerText = reasonText;
-  showScreen('screen-gameover');
+  showScreen("screen-gameover");
 }
 
 function completeCurrentStage() {
   const currentIndex = stageOrder.indexOf(currentStageId);
-  const isFinalStage = (currentIndex >= stageOrder.length - 1);
+  const isFinalStage = currentIndex >= stageOrder.length - 1;
   if (currentIndex === unlockedStageIndex && !isFinalStage) {
     unlockedStageIndex++;
-    try { localStorage.setItem('savedStageIndex', unlockedStageIndex); } catch (e) {}
+    try {
+      localStorage.setItem("savedStageIndex", unlockedStageIndex);
+    } catch (e) {}
   }
   updateStageMapUI();
 
   const stageInfo = gameData.stages[currentStageId];
-  const stageName = stageInfo?.name || "ด่านนี้";
-  const clearedTitle = document.getElementById('cleared-title');
-  const clearedSubtitle = document.getElementById('cleared-subtitle');
+  const stageName = stageInfo?.name || "บทนี้";
+  const clearedTitle = document.getElementById("cleared-title");
+  const clearedSubtitle = document.getElementById("cleared-subtitle");
   if (clearedTitle) clearedTitle.innerText = `${stageName} สำเร็จ!`;
   if (clearedSubtitle) clearedSubtitle.innerText = stageInfo?.title || "";
 
-  const btnNextChapter = document.getElementById('btn-next-chapter');
+  const btnNextChapter = document.getElementById("btn-next-chapter");
   if (btnNextChapter) {
     if (isFinalStage) {
       btnNextChapter.innerText = "พิชิตครบทุกภารกิจแล้ว";
-      btnNextChapter.onclick = () => showGameNotification("คุณผ่านการทดสอบครบทั้งหมดแล้ว!");
+      btnNextChapter.onclick = () =>
+        showGameNotification("คุณผ่านการทดสอบครบทั้งหมดแล้ว!");
     } else {
       btnNextChapter.innerText = "ตอนถัดไป";
       btnNextChapter.onclick = () => {
@@ -420,35 +763,53 @@ function completeCurrentStage() {
       };
     }
   }
-  showScreen('screen-cleared');
+  showScreen("screen-cleared");
+}
+
+// สลับแท็บบทในคลังคันจิ
+function switchGlossaryTab(stageKey) {
+  currentGlossaryTab = stageKey;
+  document.querySelectorAll(".tab-btn").forEach((btn, index) => {
+    const isTarget = stageOrder[index] === stageKey;
+    btn.classList.toggle("active", isTarget);
+  });
+  updateGlossaryUI();
 }
 
 function updateGlossaryUI() {
-  const listEl = document.getElementById('vocab-list') || document.getElementById('glossary-list');
+  const listEl = document.getElementById("glossary-list");
   if (!listEl) return;
-  listEl.innerHTML = '';
-  const vocabs = gameData.glossary[currentDifficulty] || [];
-  vocabs.forEach(item => {
-    const li = document.createElement('li');
-    li.className = 'vocab-item';
+  listEl.innerHTML = "";
+  
+  const kanjiList = gameData.glossary[currentGlossaryTab] || [];
+  if (kanjiList.length === 0) {
+    listEl.innerHTML = '<li class="empty-vocab-msg">ยังไม่มีคำศัพท์คันจิในบทนี้</li>';
+    return;
+  }
+
+  kanjiList.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "vocab-item";
     li.innerHTML = `<strong>${item.jp}</strong> <span>${item.th}</span>`;
     listEl.appendChild(li);
   });
 }
 
 function initGame() {
-  bgm = document.getElementById('bgm-player');
-  btnAudio = document.getElementById('btn-audio');
+  bgm = document.getElementById("bgm-player");
+  btnAudio = document.getElementById("btn-audio");
 
-  document.addEventListener('click', startAudioOnUserGesture, { once: true });
-  document.addEventListener('touchstart', startAudioOnUserGesture, { once: true });
+  document.addEventListener("click", startAudioOnUserGesture, { once: true });
+  document.addEventListener("touchstart", startAudioOnUserGesture, {
+    once: true,
+  });
 
   if (btnAudio) {
     btnAudio.onclick = (e) => {
       e.stopPropagation();
       initAudioContext();
       isMuted = !isMuted;
-      btnAudio.innerText = isMuted ? '✕' : '♫';
+      btnAudio.innerText = isMuted ? "✕" : "♫";
       if (bgm) {
         bgm.muted = isMuted;
         if (!isMusicStarted && !isMuted) {
@@ -459,53 +820,64 @@ function initGame() {
     };
   }
 
-  const btnStart = document.getElementById('btn-start');
-  if (btnStart) btnStart.onclick = () => showScreen('screen-difficulty');
+  const btnStart = document.getElementById("btn-start");
+  if (btnStart) btnStart.onclick = () => showScreen("screen-difficulty");
 
-  const btnEasy = document.getElementById('btn-diff-easy');
-  if (btnEasy) btnEasy.onclick = () => selectDifficulty('easy');
+  const btnEasy = document.getElementById("btn-diff-easy");
+  if (btnEasy) btnEasy.onclick = () => selectDifficulty("easy");
 
-  const btnHard = document.getElementById('btn-diff-hard');
-  if (btnHard) btnHard.onclick = () => selectDifficulty('hard');
+  const btnHard = document.getElementById("btn-diff-hard");
+  if (btnHard) btnHard.onclick = () => selectDifficulty("hard");
 
-  const btnDiffBack = document.getElementById('btn-diff-back');
-  if (btnDiffBack) btnDiffBack.onclick = () => showScreen('screen-title');
+  const btnDiffBack = document.getElementById("btn-diff-back");
+  if (btnDiffBack) btnDiffBack.onclick = () => showScreen("screen-title");
 
-  const btnStageBack = document.getElementById('btn-stage-back');
-  if (btnStageBack) btnStageBack.onclick = () => showScreen('screen-difficulty');
+  const btnStageBack = document.getElementById("btn-stage-back");
+  if (btnStageBack)
+    btnStageBack.onclick = () => showScreen("screen-difficulty");
 
-  const btnNext = document.getElementById('btn-next');
+  const btnNext = document.getElementById("btn-next");
   if (btnNext) {
     btnNext.onclick = () => {
       if (isTyping) finishTypingInstantly();
-      else { currentDialogueIndex++; renderDialogue(); }
+      else {
+        currentDialogueIndex++;
+        renderDialogue();
+      }
     };
   }
 
-  const btnRetry = document.getElementById('btn-retry');
+  const btnRetry = document.getElementById("btn-retry");
   if (btnRetry) btnRetry.onclick = () => startStage(currentStageId);
 
-  const btnBackMap = document.getElementById('btn-back-map');
-  if (btnBackMap) btnBackMap.onclick = () => showScreen('screen-stage');
+  const btnGameOverBack = document.getElementById("btn-gameover-back");
+  if (btnGameOverBack)
+    btnGameOverBack.onclick = () => showScreen("screen-stage");
 
-  stageOrder.forEach(stageKey => {
+  const btnBackMap = document.getElementById("btn-back-map");
+  if (btnBackMap) btnBackMap.onclick = () => showScreen("screen-stage");
+
+  stageOrder.forEach((stageKey) => {
     const node = document.getElementById(`node-${stageKey}`);
     if (node) node.onclick = () => startStage(stageKey);
   });
 
-  const btnGlossary = document.getElementById('btn-glossary');
-  const btnCloseGlossary = document.getElementById('btn-close-glossary');
-  const modalGlossary = document.getElementById('modal-glossary');
+  const btnGlossary = document.getElementById("btn-glossary");
+  const btnCloseGlossary = document.getElementById("btn-close-glossary");
+  const modalGlossary = document.getElementById("modal-glossary");
 
-  if (btnGlossary && modalGlossary) btnGlossary.onclick = () => modalGlossary.classList.remove('hidden');
-  if (btnCloseGlossary && modalGlossary) btnCloseGlossary.onclick = () => modalGlossary.classList.add('hidden');
+  if (btnGlossary && modalGlossary) {
+    btnGlossary.onclick = () => {
+      switchGlossaryTab("stage1");
+      modalGlossary.classList.remove("hidden");
+    };
+  }
+  if (btnCloseGlossary && modalGlossary) {
+    btnCloseGlossary.onclick = () => modalGlossary.classList.add("hidden");
+  }
 
   updateGlossaryUI();
   updateStageMapUI();
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initGame);
-} else {
-  initGame();
-}
+initGame();

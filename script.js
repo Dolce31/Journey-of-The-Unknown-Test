@@ -513,12 +513,12 @@ const gameData = {
    ใส่ลิงก์รูปตัวละครของคุณที่นี่
    ========================================================================== */
 const characterImages = {
-  เรา: "https://files.catbox.moe/2csuu8.PNG",
-  เฟลิส: "https://files.catbox.moe/ioyavk.PNG",
+  เรา: "https://files.catbox.moe/lmt9pj.PNG",
+  เฟลิส: "https://files.catbox.moe/tkhyjx.PNG",
   "ชาวบ้าน A": "",
   "ชาวบ้าน B": "",
   "ชาวบ้าน C": "",
-  "???": "https://files.catbox.moe/ioyavk.PNG",
+  "???": "https://files.catbox.moe/tkhyjx.PNG",
   บรรยาย: "",
 };
 

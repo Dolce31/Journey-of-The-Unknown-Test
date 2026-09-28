@@ -211,7 +211,7 @@ const gameData = {
           },
           {
             speaker: "เฟลิส",
-            jp: "ข้าเองก็สัมผัสพลังเวทจากเจ้าได้ ถ้าทำตามที่ข้าบอกเจ้าใช้มันได้แน่ๆ",
+            jp: "หรือว่าเองก็สัมผัสพลังเวทจากเจ้าได้ ถ้าทำตามที่ข้าบอกเจ้าใช้มันได้แน่ า",
           },
           {
             speaker: "เฟลิส",
@@ -224,7 +224,7 @@ const gameData = {
               choices: [
                 { text: "ก็มีแต่ต้องทำ", isCorrect: true },
                 {
-                  text: "จะทนอยู่ต่อก็ไม่ไหว ทำก็ได้ ",
+                  text: "อ้จะทนอยู่ต่อก็ไม่ไหว ทำก็ได้ ",
                   isCorrect: true,
                 },
                 { text: "ถ้ามันทำให้กลับได้ไวฉันก็จะทำ ", isCorrect: true },
@@ -389,7 +389,7 @@ const gameData = {
           },
           {
             speaker: "เฟลิส",
-            jp: "ข้าเองก็สัมผัสพลังเวทจากเจ้าได้ ถ้าทำตามที่ข้าบอกเจ้าใช้มันได้แน่ๆ",
+            jp: "หรือว่าเองก็สัมผัสพลังเวทจากเจ้าได้ ถ้าทำตามที่ข้าบอกเจ้าใช้มันได้แน่ า",
           },
           {
             speaker: "เฟลิส",
@@ -402,7 +402,7 @@ const gameData = {
               choices: [
                 { text: "ก็มีแต่ต้องทำ", isCorrect: true },
                 {
-                  text: "จะทนอยู่ต่อก็ไม่ไหว ทำก็ได้ ",
+                  text: "อ้จะทนอยู่ต่อก็ไม่ไหว ทำก็ได้ ",
                   isCorrect: true,
                 },
                 { text: "ถ้ามันทำให้กลับได้ไวฉันก็จะทำ ", isCorrect: true },
@@ -632,13 +632,22 @@ function finishTypingInstantly() {
   if (dialogue && dialogue.quiz) showQuizChoices(dialogue.quiz);
 }
 
+// แสดงช้อยส์คำถาม พร้อมซ่อนกรอบตัวละคร
 function showQuizChoices(quiz) {
   const quizContainer = document.getElementById("quiz-choices");
   const btnNext = document.getElementById("btn-next");
+  const portraitBox = document.querySelector(".portrait-box");
+
   if (!quizContainer || !btnNext) return;
   quizContainer.innerHTML = "";
   quizContainer.classList.remove("hidden");
   btnNext.classList.add("hidden");
+
+  // ซ่อนกรอบตัวละครตอนมีช้อยส์ขึ้นมา เพื่อขยายพื้นที่
+  if (portraitBox) {
+    portraitBox.style.display = "none";
+  }
+
   quiz.choices.forEach((choice) => {
     const btn = document.createElement("button");
     btn.className = "btn-choice";
@@ -673,8 +682,13 @@ function renderDialogue() {
   const portraitFrame = document.querySelector(".portrait-frame");
   const portraitImg = document.getElementById("portrait-img");
 
+  // ถ้าบทสนทนานี้มีช้อยส์ หรือเป็นบทบรรยาย ให้ซ่อนกรอบตัวละคร
   if (portraitBox) {
-    portraitBox.style.display = dialogue.speaker === "บรรยาย" ? "none" : "flex";
+    if (dialogue.quiz || dialogue.speaker === "บรรยาย") {
+      portraitBox.style.display = "none";
+    } else {
+      portraitBox.style.display = "flex";
+    }
   }
 
   const imgSrc = characterImages[dialogue.speaker];

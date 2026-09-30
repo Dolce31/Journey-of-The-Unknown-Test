@@ -755,12 +755,95 @@ body {
   line-height: 1.4;
 }
 
+.log-choice {
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: rgba(21, 14, 38, 0.25);
+  border-left: 3px solid var(--border-btn);
+  border-radius: 4px;
+  font-family: var(--font-clean);
+  font-size: 14.5px;
+  color: #150E26;
+  font-weight: 700;
+}
+
+.choice-tag {
+  color: #31215B;
+  font-size: 12.5px;
+  margin-right: 4px;
+}
+
 .log-empty {
   text-align: center;
   color: #FFFFFF;
   font-family: var(--font-th);
   margin-top: 30px;
   font-size: 15px;
+}
+
+/* Glossary Search */
+.glossary-search-wrap {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.glossary-search-input {
+  width: 100%;
+  padding: 10px 38px 10px 16px;
+  background: #150E26;
+  border: 2px solid var(--border-color);
+  border-radius: 20px;
+  color: #FFFFFF;
+  font-family: var(--font-clean);
+  font-size: 15px;
+  outline: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.2s ease;
+}
+
+.glossary-search-input:focus {
+  border-color: var(--border-btn);
+}
+
+.glossary-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--font-th);
+  font-size: 14px;
+}
+
+.btn-clear-search {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.search-header-meta {
+  font-family: var(--font-th);
+  font-size: 14px;
+  color: var(--border-btn);
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.vocab-stage-tag {
+  font-family: var(--font-th);
+  font-size: 11.5px;
+  color: #FFFFFF;
+  background: #31215B;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-weight: 700;
+  text-align: center;
+  width: fit-content;
 }
 
 /* Glossary */
@@ -880,6 +963,11 @@ body {
   padding: 11px 14px;
   border-bottom: 1.5px solid rgba(111, 91, 156, 0.4);
   font-size: 15px;
+}
+
+.vocab-row.search-row {
+  grid-template-columns: 0.9fr 1fr 1.1fr 1.4fr;
+  gap: 8px;
 }
 
 .vocab-row:last-child {

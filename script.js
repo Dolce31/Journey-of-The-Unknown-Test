@@ -69,14 +69,34 @@ const stageNamesMap = {
   stage5: "บทที่ 5",
 };
 
-// เก็บแท็บบทที่กำลังเลือกดู
+let currentDifficulty = "easy";
+let currentStageId = "stage1";
+let currentDialogueIndex = 0;
+let currentDialogueList = [];
+
+// ดึงด่านที่ปลดล็อกของโหมดปัจจุบัน (แยกบันทึกไม่ปนกัน)
+function getUnlockedIndex() {
+  try {
+    const val = parseInt(localStorage.getItem(`unlockedStage_${currentDifficulty}`));
+    return isNaN(val) ? 0 : val;
+  } catch (e) {
+    return 0;
+  }
+}
+
+function setUnlockedIndex(val) {
+  try {
+    localStorage.setItem(`unlockedStage_${currentDifficulty}`, val);
+  } catch (e) {}
+}
+
 let currentGlossaryTab = "stage1";
 
-// ระบบพลังชีวิต (ปรับตามความยาก: ง่าย = 2, ยาก = 1)
-let maxLives = 2;
-let playerLives = 2;
+// ระบบหัวใจใหม่: ง่าย = 3 ดวง, ยาก = 2 ดวง
+let maxLives = 3;
+let playerLives = 3;
 
-// บันทึกช้อยส์ที่ผู้เล่นเลือกในแต่ละบทสนทนา
+// บันทึกช้อยส์ที่เลือก
 let userChoices = {};
 
 const gameData = {
@@ -1049,18 +1069,6 @@ const characterImages = {
   "เจ้าของบ้าน": "",
 };
 
-let currentDifficulty = "easy";
-let currentStageId = "stage1";
-let currentDialogueIndex = 0;
-let currentDialogueList = [];
-let unlockedStageIndex = 0;
-
-try {
-  unlockedStageIndex = parseInt(localStorage.getItem("savedStageIndex")) || 0;
-} catch (e) {
-  unlockedStageIndex = 0;
-}
-
 let typewriterTimer = null;
 let isTyping = false;
 let fullCurrentText = "";
@@ -1088,7 +1096,7 @@ function showScreen(screenId) {
 
 function selectDifficulty(diff) {
   currentDifficulty = diff;
-  maxLives = diff === "easy" ? 2 : 1;
+  maxLives = diff === "easy" ? 3 : 2;
   playerLives = maxLives;
   
   const badge = document.getElementById("diff-badge");
@@ -1097,12 +1105,14 @@ function selectDifficulty(diff) {
   showScreen("screen-stage");
 }
 
+// อัปเดตแผนที่ด่าน ล็อกด่านที่ยังเล่นไม่ผ่าน
 function updateStageMapUI() {
+  const unlockedIndex = getUnlockedIndex();
   stageOrder.forEach((stageKey, index) => {
     const nodeEl = document.getElementById(`node-${stageKey}`);
     if (!nodeEl) return;
     const lockIcon = nodeEl.querySelector(".lock-icon");
-    if (index <= unlockedStageIndex) {
+    if (index <= unlockedIndex) {
       nodeEl.classList.remove("locked");
       nodeEl.classList.add("unlocked");
       if (lockIcon) lockIcon.innerText = "";
@@ -1114,7 +1124,7 @@ function updateStageMapUI() {
   });
 }
 
-// อัปเดตแถบหัวใจตามพลังชีวิตสูงสุดของโหมด
+// แสดงหัวใจ
 function updateLivesUI(show = true) {
   const livesEl = document.getElementById("player-lives");
   if (!livesEl) return;
@@ -1136,10 +1146,14 @@ function updateLivesUI(show = true) {
 
 function startStage(stageKey) {
   const targetIndex = stageOrder.indexOf(stageKey);
-  if (targetIndex > unlockedStageIndex) {
-    showGameNotification("บทนี้ถูกล็อกอยู่ เคลียร์บทก่อนหน้าก่อนนะจ๊ะ");
+  const unlockedIndex = getUnlockedIndex();
+  
+  // ตรวจสอบการล็อกด่าน
+  if (targetIndex > unlockedIndex) {
+    showGameNotification("บทนี้ยังไม่ปลดล็อก ต้องผ่านบทก่อนหน้าก่อนนะ!");
     return;
   }
+
   currentStageId = stageKey;
   currentDialogueIndex = 0;
   playerLives = maxLives;
@@ -1186,7 +1200,6 @@ function finishTypingInstantly() {
   if (dialogue && dialogue.quiz) showQuizChoices(dialogue.quiz);
 }
 
-// สุ่มลำดับ Array (Fisher-Yates Shuffle)
 function shuffleArray(array) {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -1196,7 +1209,6 @@ function shuffleArray(array) {
   return shuffled;
 }
 
-// แสดงช้อยส์ สุ่มตำแหน่งข้อ และหน่วงเวลาล็อกคลิก 450ms กันนิ้วลั่น
 function showQuizChoices(quiz) {
   const quizContainer = document.getElementById("quiz-choices");
   const btnNext = document.getElementById("btn-next");
@@ -1301,7 +1313,7 @@ function renderDialogue() {
   }
 }
 
-// จัดการตัวเลือก ตอบผิดลดเลือด ล็อกปุ่มไม่ให้กดซ้ำ
+// ตรวจสอบตัวเลือก: ลดหัวใจ และตายเมื่อหมดโอกาส
 function handleChoice(choice, clickedBtn) {
   if (choice.isCorrect) {
     userChoices[currentDialogueIndex] = choice.text;
@@ -1319,23 +1331,33 @@ function handleChoice(choice, clickedBtn) {
       renderDialogue();
     }, 600);
   } else {
-    playerLives--;
-    updateLivesUI(true);
+    if (playerLives > 0) {
+      playerLives--;
+      updateLivesUI(true);
 
-    if (clickedBtn) {
-      clickedBtn.disabled = true;
-      clickedBtn.style.opacity = "0.5";
-      clickedBtn.style.borderColor = "#e74c3c";
-    }
+      if (clickedBtn) {
+        clickedBtn.disabled = true;
+        clickedBtn.style.opacity = "0.5";
+        clickedBtn.style.borderColor = "#e74c3c";
+      }
 
-    showGameNotification(choice.deathReason || "ตอบผิด! เสียพลังชีวิต 1 ดวง");
-
-    if (playerLives <= 0) {
+      if (playerLives === 0) {
+        showGameNotification("⚠️ หัวใจหมดแล้ว! หากตอบผิดอีกครั้งจะตายทันที");
+      } else {
+        showGameNotification(choice.deathReason || "ตอบผิด! เสียหัวใจ 1 ดวง");
+      }
+    } else {
+      // หัวใจหมดอยู่แล้ว และยังตอบผิดซ้ำอีก -> GAME OVER
+      if (clickedBtn) {
+        clickedBtn.disabled = true;
+        clickedBtn.style.opacity = "0.5";
+        clickedBtn.style.borderColor = "#e74c3c";
+      }
       setTimeout(() => {
         triggerGameOver(
-          choice.deathReason || "พลังชีวิตหมดสิ้น! ใช้ภาษาผิดพลาดจนถึงแก่กรรม",
+          choice.deathReason || "ตอบผิดเกินกำหนด! ใช้ภาษาผิดพลาดจนถึงแก่กรรม",
         );
-      }, 800);
+      }, 700);
     }
   }
 }
@@ -1349,11 +1371,11 @@ function triggerGameOver(reasonText) {
 function completeCurrentStage() {
   const currentIndex = stageOrder.indexOf(currentStageId);
   const isFinalStage = currentIndex >= stageOrder.length - 1;
-  if (currentIndex === unlockedStageIndex && !isFinalStage) {
-    unlockedStageIndex++;
-    try {
-      localStorage.setItem("savedStageIndex", unlockedStageIndex);
-    } catch (e) {}
+  const currentUnlocked = getUnlockedIndex();
+  
+  // ปลดล็อกด่านถัดไปของโหมดนี้
+  if (currentIndex === currentUnlocked && !isFinalStage) {
+    setUnlockedIndex(currentIndex + 1);
   }
   updateStageMapUI();
 
@@ -1381,7 +1403,6 @@ function completeCurrentStage() {
   showScreen("screen-cleared");
 }
 
-// ฟังก์ชันสร้างและแสดงประวัติการสนทนาย้อนหลัง
 function renderDialogueLog() {
   const container = document.getElementById("log-content-list");
   if (!container) return;
@@ -1434,7 +1455,6 @@ function switchGlossaryTab(stageKey) {
   renderGlossaryAccordion();
 }
 
-// เรนเดอร์คลังคันจิตามแท็บบทปกติ
 function renderGlossaryAccordion() {
   const container = document.getElementById("glossary-accordion-container");
   if (!container) return;
@@ -1491,7 +1511,6 @@ function renderGlossaryAccordion() {
   });
 }
 
-// ฟังก์ชันค้นหาคำศัพท์คันจิจากทุกบท
 function filterGlossary(query) {
   const container = document.getElementById("glossary-accordion-container");
   const tabsEl = document.getElementById("glossary-stage-tabs");
@@ -1500,7 +1519,6 @@ function filterGlossary(query) {
 
   const q = query.trim().toLowerCase();
 
-  // ถ้าช่องค้นหาว่าง ให้กลับไปแสดงแท็บบทตามปกติ
   if (!q) {
     if (tabsEl) tabsEl.style.display = "flex";
     if (btnClear) btnClear.classList.add("hidden");
@@ -1508,7 +1526,6 @@ function filterGlossary(query) {
     return;
   }
 
-  // หากมีการพิมพ์ค้นหา ซ่อนแท็บบทเพื่อแสดงผลการค้นหาแบบรวม
   if (tabsEl) tabsEl.style.display = "none";
   if (btnClear) btnClear.classList.remove("hidden");
   container.innerHTML = "";
@@ -1609,7 +1626,7 @@ function initGame() {
     };
   }
 
-  // ผูกปุ่มเปิด-ปิดคู่มือการเล่น (How to Play)
+  // คู่มือการเล่น
   const btnGuideMain = document.getElementById("btn-guide-main");
   const btnCloseGuide = document.getElementById("btn-close-guide");
   const modalGuide = document.getElementById("modal-guide");
@@ -1625,7 +1642,7 @@ function initGame() {
     };
   }
 
-  // ผูกปุ่มเปิด-ปิดประวัติการสนทนา (Log)
+  // ประวัติการสนทนา
   const btnLog = document.getElementById("btn-log");
   const btnCloseLog = document.getElementById("btn-close-log");
   const modalLog = document.getElementById("modal-log");
@@ -1679,12 +1696,13 @@ function initGame() {
   const btnBackMap = document.getElementById("btn-back-map");
   if (btnBackMap) btnBackMap.onclick = () => showScreen("screen-stage");
 
+  // ผูกคลิกที่โหนดด่าน
   stageOrder.forEach((stageKey) => {
     const node = document.getElementById(`node-${stageKey}`);
     if (node) node.onclick = () => startStage(stageKey);
   });
 
-  // คลังคันจิ และ ระบบค้นหา
+  // คลังคันจิ
   const btnGlossary = document.getElementById("btn-glossary");
   const btnCloseGlossary = document.getElementById("btn-close-glossary");
   const modalGlossary = document.getElementById("modal-glossary");

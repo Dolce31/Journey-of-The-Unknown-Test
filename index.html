@@ -203,12 +203,12 @@
         </div>
         <div class="modal-body guide-body">
           <div class="guide-card">
-            <h4>เรื่องราวและเป้าหมาย</h4>
+            <h4>📖 เรื่องราวและเป้าหมาย</h4>
             <p>คุณถูกอัญเชิญมาต่างโลกโดยความผิดพลาด ทางเดียวที่จะกลับโลกเดิมได้คือการช่วยทำภารกิจด้วยการร่ายเวทมนตร์ภาษาญี่ปุ่นร่วมกับเฟลิส</p>
           </div>
 
           <div class="guide-card">
-            <h4>ระดับความยาก & หัวใจ</h4>
+            <h4>🎮 ระดับความยาก & หัวใจ</h4>
             <ul>
               <li><strong>โหมดง่าย (Easy):</strong> มีหัวใจ ❤️❤️ (2 ดวง) ตอบผิดได้ 1 ครั้ง หากผิดครั้งที่ 2 ถึงจะ Game Over</li>
               <li><strong>โหมดยาก (Hard):</strong> มีหัวใจ ❤️ (1 ดวง) ห้ามตอบผิดเด็ดขาด พลาดครั้งเดียว Game Over ทันที</li>
@@ -216,13 +216,13 @@
           </div>
 
           <div class="guide-card">
-            <h4>คลังคันจิ</h4>
-            <strong>"คลังคันจิ"</strong> ที่หน้าหลักเพื่อทบทวนคำศัพท์ คำอ่าน และความหมายก่อนเริ่มเล่นได้เสมอ</p>
+            <h4>📚 คลังคันจิ (ตัวช่วยสำคัญ)</h4>
+            <p>อย่าเสี่ยงเดาสุ่ม คุณสามารถเปิดปุ่ม <strong>"คลังคันจิ"</strong> ที่หน้าหลักเพื่อทบทวนคำศัพท์ คำอ่าน และความหมายก่อนเริ่มเล่นได้เสมอ</p>
           </div>
 
           <div class="guide-card">
             <h4>⚠️ ข้อควรระวัง</h4>
-            <p>การเลือกคันจิผิดความหมาย จะส่งผลให้เวทมนตร์ทำงานผิดพลาดจนสามารถนำไปสู่การเสียชีวิต</p>
+            <p>การเลือกคันจิผิดความหมาย จะส่งผลให้เวทมนตร์ทำงานผิดพลาดจนเกิดสาเหตุการเสียชีวิตสุดประหลาด!</p>
           </div>
         </div>
       </div>
@@ -248,7 +248,13 @@
         </div>
 
         <div class="modal-body">
-          <div class="glossary-tabs stage-tabs">
+          <!-- ช่องค้นหาคำศัพท์คันจิ -->
+          <div class="glossary-search-wrap">
+            <input type="text" id="glossary-search-input" class="glossary-search-input" placeholder="🔍 ค้นหาคันจิ, คำอ่าน, ความหมาย..." autocomplete="off">
+            <button id="btn-clear-search" class="btn-clear-search hidden" type="button">✕</button>
+          </div>
+
+          <div id="glossary-stage-tabs" class="glossary-tabs stage-tabs">
             <button class="tab-btn active" onclick="switchGlossaryTab('stage1')">บทที่ 1</button>
             <button class="tab-btn" onclick="switchGlossaryTab('stage2')">บทที่ 2</button>
             <button class="tab-btn" onclick="switchGlossaryTab('stage3')">บทที่ 3</button>

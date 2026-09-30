@@ -61,12 +61,23 @@ const stageOrder = [
   "stage5",
 ];
 
+const stageNamesMap = {
+  stage1: "บทที่ 1",
+  stage2: "บทที่ 2",
+  stage3: "บทที่ 3",
+  stage4: "บทที่ 4",
+  stage5: "บทที่ 5",
+};
+
 // เก็บแท็บบทที่กำลังเลือกดู
 let currentGlossaryTab = "stage1";
 
 // ระบบพลังชีวิต (ปรับตามความยาก: ง่าย = 2, ยาก = 1)
 let maxLives = 2;
 let playerLives = 2;
+
+// บันทึกช้อยส์ที่ผู้เล่นเลือกในแต่ละบทสนทนา
+let userChoices = {};
 
 const gameData = {
   glossary: {
@@ -1132,6 +1143,7 @@ function startStage(stageKey) {
   currentStageId = stageKey;
   currentDialogueIndex = 0;
   playerLives = maxLives;
+  userChoices = {};
   updateLivesUI(false);
   
   const stage = gameData.stages[stageKey];
@@ -1228,7 +1240,9 @@ function renderDialogue() {
     return;
   }
 
-  if (dialogue.quiz) {
+  // แสดงแถบหัวใจเฉพาะเมื่อเป็นควิซที่มีข้อผิด
+  const hasWrongChoice = dialogue.quiz && dialogue.quiz.choices.some((c) => !c.isCorrect);
+  if (hasWrongChoice) {
     updateLivesUI(true);
   } else {
     updateLivesUI(false);
@@ -1287,9 +1301,11 @@ function renderDialogue() {
   }
 }
 
-// จัดการตัวเลือก ตอบผิดลดเลือด ล็อกปุ่มไม่ให้กดซ้ำ (ไม่ขีดฆ่า)
+// จัดการตัวเลือก ตอบผิดลดเลือด ล็อกปุ่มไม่ให้กดซ้ำ
 function handleChoice(choice, clickedBtn) {
   if (choice.isCorrect) {
+    userChoices[currentDialogueIndex] = choice.text;
+
     document
       .querySelectorAll(".btn-choice")
       .forEach((b) => (b.disabled = true));
@@ -1377,7 +1393,7 @@ function renderDialogueLog() {
     return;
   }
 
-  pastDialogues.forEach((d) => {
+  pastDialogues.forEach((d, idx) => {
     if (!d.jp && !d.text) return;
 
     const entry = document.createElement("div");
@@ -1393,6 +1409,14 @@ function renderDialogueLog() {
 
     entry.appendChild(speaker);
     entry.appendChild(text);
+
+    if (userChoices[idx]) {
+      const choiceEl = document.createElement("div");
+      choiceEl.className = "log-choice";
+      choiceEl.innerHTML = `<span class="choice-tag">▶ ช้อยส์ที่เลือก:</span> ${userChoices[idx]}`;
+      entry.appendChild(choiceEl);
+    }
+
     container.appendChild(entry);
   });
 
@@ -1410,6 +1434,7 @@ function switchGlossaryTab(stageKey) {
   renderGlossaryAccordion();
 }
 
+// เรนเดอร์คลังคันจิตามแท็บบทปกติ
 function renderGlossaryAccordion() {
   const container = document.getElementById("glossary-accordion-container");
   if (!container) return;
@@ -1464,6 +1489,99 @@ function renderGlossaryAccordion() {
     group.appendChild(bodyDiv);
     container.appendChild(group);
   });
+}
+
+// ฟังก์ชันค้นหาคำศัพท์คันจิจากทุกบท
+function filterGlossary(query) {
+  const container = document.getElementById("glossary-accordion-container");
+  const tabsEl = document.getElementById("glossary-stage-tabs");
+  const btnClear = document.getElementById("btn-clear-search");
+  if (!container) return;
+
+  const q = query.trim().toLowerCase();
+
+  // ถ้าช่องค้นหาว่าง ให้กลับไปแสดงแท็บบทตามปกติ
+  if (!q) {
+    if (tabsEl) tabsEl.style.display = "flex";
+    if (btnClear) btnClear.classList.add("hidden");
+    renderGlossaryAccordion();
+    return;
+  }
+
+  // หากมีการพิมพ์ค้นหา ซ่อนแท็บบทเพื่อแสดงผลการค้นหาแบบรวม
+  if (tabsEl) tabsEl.style.display = "none";
+  if (btnClear) btnClear.classList.remove("hidden");
+  container.innerHTML = "";
+
+  const results = [];
+
+  stageOrder.forEach((stageKey) => {
+    const stageVocab = gameData.glossary[stageKey];
+    if (!stageVocab) return;
+
+    const stageLabel = stageNamesMap[stageKey] || stageKey;
+
+    (stageVocab.easy || []).forEach((item) => {
+      if (
+        item.kanji.toLowerCase().includes(q) ||
+        item.furi.toLowerCase().includes(q) ||
+        item.th.toLowerCase().includes(q)
+      ) {
+        results.push({ ...item, stage: `${stageLabel} (N5)` });
+      }
+    });
+
+    (stageVocab.hard || []).forEach((item) => {
+      if (
+        item.kanji.toLowerCase().includes(q) ||
+        item.furi.toLowerCase().includes(q) ||
+        item.th.toLowerCase().includes(q)
+      ) {
+        results.push({ ...item, stage: `${stageLabel} (N4-N3)` });
+      }
+    });
+  });
+
+  const metaHeader = document.createElement("div");
+  metaHeader.className = "search-header-meta";
+  metaHeader.innerText = `ผลการค้นหา: พบ ${results.length} คำ`;
+  container.appendChild(metaHeader);
+
+  if (results.length === 0) {
+    const emptyDiv = document.createElement("div");
+    emptyDiv.className = "vocab-empty";
+    emptyDiv.style.color = "#FFFFFF";
+    emptyDiv.innerText = `ไม่พบคันจิหรือความหมายที่ตรงกับ "${query}"`;
+    container.appendChild(emptyDiv);
+    return;
+  }
+
+  const group = document.createElement("div");
+  group.className = "accordion-group open";
+  group.style.border = "2px solid var(--border-btn)";
+
+  const bodyDiv = document.createElement("div");
+  bodyDiv.className = "accordion-body";
+  bodyDiv.style.maxHeight = "none";
+
+  const ul = document.createElement("ul");
+  ul.className = "accordion-list";
+
+  results.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "vocab-row search-row";
+    li.innerHTML = `
+      <span class="vocab-stage-tag">${item.stage}</span>
+      <span class="vocab-kanji">${item.kanji}</span>
+      <span class="vocab-furi">${item.furi}</span>
+      <span class="vocab-meaning">${item.th}</span>
+    `;
+    ul.appendChild(li);
+  });
+
+  bodyDiv.appendChild(ul);
+  group.appendChild(bodyDiv);
+  container.appendChild(group);
 }
 
 function initGame() {
@@ -1566,18 +1684,33 @@ function initGame() {
     if (node) node.onclick = () => startStage(stageKey);
   });
 
+  // คลังคันจิ และ ระบบค้นหา
   const btnGlossary = document.getElementById("btn-glossary");
   const btnCloseGlossary = document.getElementById("btn-close-glossary");
   const modalGlossary = document.getElementById("modal-glossary");
+  const searchInput = document.getElementById("glossary-search-input");
+  const btnClearSearch = document.getElementById("btn-clear-search");
 
   if (btnGlossary && modalGlossary) {
     btnGlossary.onclick = () => {
+      if (searchInput) searchInput.value = "";
       switchGlossaryTab("stage1");
       modalGlossary.classList.remove("hidden");
     };
   }
   if (btnCloseGlossary && modalGlossary) {
     btnCloseGlossary.onclick = () => modalGlossary.classList.add("hidden");
+  }
+
+  if (searchInput) {
+    searchInput.oninput = (e) => filterGlossary(e.target.value);
+  }
+
+  if (btnClearSearch && searchInput) {
+    btnClearSearch.onclick = () => {
+      searchInput.value = "";
+      filterGlossary("");
+    };
   }
 
   updateStageMapUI();
